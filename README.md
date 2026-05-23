@@ -84,8 +84,8 @@ Once the script finishes, you should see:
  Installation Completed Successfully!
 ==========================================
 
- Flask app:  http://localhost/
- Grafana:    http://localhost/dashboard/
+ Flask App:  http://localhost:8080
+ Grafana:    http://localhost:8080/dashboard/login
  Vault UI:   http://localhost:8200/ui
 ==========================================
 ```
