@@ -28,9 +28,9 @@ wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/sha
 echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
 sudo apt update && sudo apt install vault -y
 
-# 4. Start Vault in Dev Mode and AUTOMATICALLY capture the Root Token
+# 4. Start Vault in Dev Mode with an explicit Root Token
 sudo systemctl stop vault 2>/dev/null || true
-vault server -dev > /tmp/vault.log 2>&1 &
+vault server -dev -dev-root-token-id="root" > /tmp/vault.log 2>&1 &
 
 # Wait for Vault to be ready (poll instead of fixed sleep)
 echo "Waiting for Vault to become ready..."
@@ -47,8 +47,7 @@ for i in $(seq 1 15); do
     sleep 1
 done
 
-# Automatically extract the fresh Root Token from the logs
-DYNAMIC_TOKEN=$(grep "Root Token:" /tmp/vault.log | awk '{print $3}')
+DYNAMIC_TOKEN="root"
 echo "Captured Active Vault Token: $DYNAMIC_TOKEN"
 
 # 5. Authenticate with Vault and inject our secret key
