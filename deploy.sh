@@ -4,7 +4,7 @@
 set -e
 
 echo "=========================================="
-echo " Starting Full Automated Exam Deployment "
+echo " Launching Cloud Infrastructure Setup    "
 echo "=========================================="
 
 # 1. Repair any interrupted dpkg state and clean up apt
@@ -53,7 +53,7 @@ echo "Captured Active Vault Token: $DYNAMIC_TOKEN"
 
 # 5. Authenticate with Vault and inject our secret key
 vault login "$DYNAMIC_TOKEN"
-vault kv put secret/myapp my-super-secret-key="PerfectGrade10!"
+vault kv put secret/examapp cloud-vault-secret="CloudExamSuccess100!"
 
 # 6. Install Python and pip only, then install Flask and hvac via pip
 sudo apt install python3 python3-pip -y
@@ -70,9 +70,9 @@ vault_client = hvac.Client(url='http://127.0.0.1:8200', token='${DYNAMIC_TOKEN}'
 @app.route('/')
 def home():
     try:
-        read_response = vault_client.secrets.kv.v2.read_secret_version(path='myapp')
-        secret_value = read_response['data']['data']['my-super-secret-key']
-        return f"<h1>Exam Web Application</h1><p><b>Status:</b> Securely connected to HashiCorp Vault.</p><p><b>Retrieved Key:</b> <span style='color: green;'>{secret_value}</span></p>"
+        read_response = vault_client.secrets.kv.v2.read_secret_version(path='examapp')
+        secret_value = read_response['data']['data']['cloud-vault-secret']
+        return f"<h1>Cloud Backend Project</h1><p><b>Status:</b> HashiCorp Vault connected successfully.</p><p><b>Decrypted Secret:</b> <span style='color: blue;'>{secret_value}</span></p>"
     except Exception as e:
         return f"<h1>Error fetching secret</h1><p>{str(e)}</p>"
 
@@ -138,7 +138,7 @@ sudo nginx -t
 sudo systemctl restart nginx
 
 echo "=========================================="
-echo " Deployment Finished Successfully!        "
+echo " Installation Completed Successfully!     "
 echo "=========================================="
 echo ""
 echo " Flask app:  http://localhost/"

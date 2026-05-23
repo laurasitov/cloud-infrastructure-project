@@ -1,10 +1,10 @@
-# Cloud Programming Exam — Infrastructure Automation
+# Cloud Infrastructure Setup — Automated Deployment
 
-A fully automated, single-script deployment of a cloud-native infrastructure stack on Ubuntu, covering reverse proxying, secrets management, a Python web application, and a monitoring suite.
+This repository provides an automated, one-script provisioning process for a cloud-native stack on Ubuntu. The deployment includes a Python web service, HashiCorp Vault for secrets management, Nginx for reverse proxying, and a complete Prometheus and Grafana monitoring setup.
 
 ---
 
-## Architecture Overview
+## System Architecture
 
 ```
 Client (Port 80)
@@ -30,19 +30,19 @@ Client (Port 80)
 | Metrics         | Prometheus            | 9090 | Internal only           |
 | Dashboard       | Grafana               | 3000 | Via Nginx `/dashboard/` |
 
-> **Note:** Vault runs in **dev mode**, which is in-memory only. All secrets are lost if Vault or the machine restarts. This is intentional for exam/demo purposes — do not use in production.
+> **Important:** Vault is configured in **dev mode** (in-memory storage). Any saved secrets will be wiped if the server or Vault service restarts. This is designed for testing/academic purposes—avoid using this setup in production.
 
 ---
 
-## Prerequisites
+## System Requirements
 
-- A clean Ubuntu 22.04 (or 24.04) VM or instance
-- SSH access with a user that has `sudo` privileges
-- Internet access (to download packages)
+- A fresh Ubuntu 22.04 or 24.04 instance
+- SSH connection with a `sudo`-capable user
+- Active internet connection to fetch packages
 
 ---
 
-## Deployment — 3 Commands
+## Quick Start / Deployment
 
 ```bash
 # 1. Download the deployment script
@@ -55,33 +55,33 @@ chmod +x deploy.sh
 sudo ./deploy.sh
 ```
 
-The script is fully automated — no interactive prompts, no manual edits required.
+The setup script is completely automated. It will not prompt you for any inputs or manual configuration.
 
 ---
 
-## What the Script Does
+## Automated Workflow Explained
 
-1. **Updates** the system package lists
-2. **Installs Nginx** as the reverse proxy
-3. **Installs HashiCorp Vault** from the official HashiCorp APT repository
-4. **Starts Vault in dev mode** and captures the root token automatically
-5. **Writes a secret** (`my-super-secret-key`) into Vault's KV store
-6. **Installs Python 3, Flask, and hvac** (the Vault Python client)
-7. **Generates `app.py`** — a Flask app that reads and displays the secret from Vault
-8. **Installs Prometheus and Grafana** from their official repositories
-9. **Configures Grafana** to serve under the `/dashboard/` path
-10. **Writes the Nginx config** with path-based routing to Flask and Grafana
-11. **Validates and restarts Nginx** to apply the configuration
+1. **Refreshes** system repositories and updates package indexes.
+2. **Sets up Nginx** to act as our ingress controller and reverse proxy.
+3. **Installs HashiCorp Vault** using the official HashiCorp APT repo.
+4. **Initializes Vault in dev mode** and automatically captures the newly generated root token.
+5. **Writes a secret** (`cloud-vault-secret`) securely into Vault's key-value store.
+6. **Deploys Python 3, Flask, and hvac** (the necessary Python library for Vault).
+7. **Scaffolds `app.py`** — a simple Flask application configured to retrieve the secret from Vault.
+8. **Installs Prometheus and Grafana** directly from their official sources.
+9. **Tweaks Grafana's settings** so it safely serves traffic on the `/dashboard/` sub-path.
+10. **Generates Nginx configuration** to route traffic correctly to the Flask app and Grafana dashboard.
+11. **Checks and reloads Nginx** to activate the new traffic rules.
 
 ---
 
-## Verifying the Deployment
+## Validating the Setup
 
 Once the script finishes, you should see:
 
 ```
 ==========================================
- Deployment Finished Successfully!
+ Installation Completed Successfully!
 ==========================================
 
  Flask app:  http://localhost/
@@ -92,28 +92,28 @@ Once the script finishes, you should see:
 
 | Service   | URL                           | Expected                                          |
 | --------- | ----------------------------- | ------------------------------------------------- |
-| Flask App | `http://<your-ip>/`           | Displays secret retrieved from Vault              |
-| Grafana   | `http://<your-ip>/dashboard/` | Grafana login page (proxied via Nginx on port 80) |
-| Vault UI  | `http://<your-ip>:8200/ui`    | Vault web interface                               |
+| Flask App | `http://<your-ip>/`           | Loads the web app and displays the decrypted secret |
+| Grafana   | `http://<your-ip>/dashboard/` | Grafana metrics UI (handled via Nginx ingress)    |
+| Vault UI  | `http://<your-ip>:8200/ui`    | Official HashiCorp Vault Web UI                   |
 
 ---
 
-## Known Limitations
+## Project Disclaimers \& Limitations
 
-- **Vault dev mode**: Data is in-memory only and lost on restart. A production deployment would use a persistent Vault backend with proper unseal keys.
-- **Flask token**: The Vault root token is baked into `app.py` at generation time. If Vault restarts and issues a new token, the app will fail to authenticate until `deploy.sh` is re-run.
-- **No TLS**: All traffic is served over plain HTTP. A production setup would terminate TLS at Nginx with a valid certificate.
-- **No process supervision**: Flask runs as a background process (`&`), not a managed systemd service. It will not restart automatically on failure.
-- **Grafana must be accessed via Nginx**: Always use `http://<your-ip>/dashboard/` — going directly to port 3000 will cause redirect issues since Grafana is configured to expect traffic through the Nginx proxy.
+- **Vault Dev Infrastructure**: Vault data vanishes on reboot. A real-world setup requires persistent storage and a proper auto-unseal mechanism.
+- **Static Vault Token**: The Python app relies on the Vault token injected at deployment time. If you restart Vault manually, the token expires, breaking the app until you re-run the deployment.
+- **Unencrypted Traffic (No SSL/TLS)**: Everything operates on plain HTTP. In production environments, Nginx should handle TLS termination with a valid SSL certificate.
+- **Background Processes**: The Python app runs in the background (`&`), not via `systemd`. If it crashes, it won't auto-restart.
+- **Grafana Routing constraints**: You must access Grafana via `http://<your-ip>/dashboard/`. Hitting port 3000 directly will result in broken redirects because it's configured behind a proxy.
 
 ---
 
-## Repository Structure
+## Project Files
 
 ```
 .
-├── README.md       # This file
-└── deploy.sh       # Master deployment script
+├── deploy.sh       # Main autonomous deployment file
+└── README.md       # Project documentation (this file)
 ```
 
-> `app.py` is generated at deploy time and is intentionally excluded from version control.
+> The `app.py` source code is built on-the-fly and is intentionally kept out of the Git repository.
